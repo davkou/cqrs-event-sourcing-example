@@ -5,7 +5,7 @@ EXEC_MONGO = $(DOCKER_COMPOSE) exec mongo
 COMPOSER = $(EXEC_WEB_API) composer
 SYMFONY = $(EXEC_WEB_API) bin/console
 
-.PHONY: install start logs vendor require clear-cache test-unit test-integration test-functional test-api test-all test-coverage load-mongo-fixtures
+.PHONY: install start stop logs vendor require clear-cache test-unit test-integration test-functional test-api test-all test-coverage load-mongo-fixtures
 
 ##
 ##Setup
@@ -18,7 +18,10 @@ install: build start vendor
 ##
 ##Docker
 start: ## starts the application
-	$(DOCKER_COMPOSE) up -d
+	$(DOCKER_COMPOSE) up -d --remove-orphans
+
+stop:
+	$(DOCKER_COMPOSE) down
 
 logs: ## shows the application logs
 	$(DOCKER_COMPOSE) logs -f

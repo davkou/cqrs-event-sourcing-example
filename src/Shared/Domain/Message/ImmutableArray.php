@@ -16,7 +16,7 @@ namespace Taranto\ListMaker\Shared\Domain\Message;
  * @package Taranto\ListMaker\Shared\Domain\Message
  * @author Renan Taranto <renantaranto@gmail.com>
  */
-abstract class ImmutableArray extends \SplFixedArray implements \Countable, \Iterator, \ArrayAccess
+abstract class ImmutableArray extends \SplFixedArray implements \Countable, \ArrayAccess
 {
     /**
      * ImmutableArray constructor.

@@ -1,7 +1,7 @@
-version: '3.7'
 services:
     mysql:
         build: .docker/mysql
+        container_name: mcq_mysql
         command: ["--default-authentication-plugin=mysql_native_password"]
         ports:
             - "3306:3306"
@@ -13,13 +13,29 @@ services:
             - MYSQL_PORT=$MYSQL_PORT
         volumes:
             - ./.docker/mysql/data:/var/lib/mysql:rw
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: mcq_phpmyadmin
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+            PMA_USER: root
+            PMA_PASSWORD: $MYSQL_ROOT_PASSWORD
+        ports:
+            - "8780:80"
+        depends_on:
+            - mysql
+
     mongo:
         build: ./.docker/mongo
+        container_name: mcq_mongo
         ports:
             - "27017:27017"
         volumes:
             - ./.docker/mongo/data:/data/db:rw
             - ./tests/etc/_data/mongo:/testing-data:rw
+
     web_api:
         build:
             context: ./.docker/php
@@ -27,38 +43,47 @@ services:
                 - uid=1000
                 - gid=1000
             target: web_api
+        container_name: web_api
         volumes:
             - ./:/var/www/app:cached
         depends_on:
             - mysql
             - mongo
             - rabbit
+
     events_consumer:
         build:
             context: ./.docker/php
             target: events_consumer
+        container_name: events_consumer
         volumes:
             - ./:/var/www/app:cached
         depends_on:
             - web_api
+
     nginx:
         build: ./.docker/nginx
+        container_name: mcq_nginx
         ports:
-            - "80:80"
+            - "8012:80"
         volumes:
             - ./:/var/www/app:cached
         depends_on:
             - web_api
+
     rabbit:
-        image: rabbitmq:3.8-management
+        image: rabbitmq:3.9-management
+        container_name: mcq_rabbit
         hostname: rabbitmq
         ports:
             - "15672:15672"
         environment:
             - RABBITMQ_DEFAULT_USER=$RABBIT_USER
             - RABBITMQ_DEFAULT_PASS=$RABBIT_PASSWORD
+
     mercure:
         image: dunglas/mercure
+        container_name: mercure
         environment:
             - SERVER_NAME=:3000
             - MERCURE_PUBLISHER_JWT_KEY=$MERCURE_JWT_SECRET
@@ -70,3 +95,11 @@ services:
         volumes:
             - ./.docker/mercure/caddy_data:/data
             - ./.docker/mercure/caddy_config:/config
+
+    portainer:
+        image: portainer/portainer-ce:latest
+        container_name: mp_portainer
+        ports:
+            - "9943:9443"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
