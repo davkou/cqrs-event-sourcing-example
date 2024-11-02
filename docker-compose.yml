@@ -4,7 +4,7 @@ services:
         container_name: mcq_mysql
         command: ["--default-authentication-plugin=mysql_native_password"]
         ports:
-            - "3306:3306"
+            - "3307:3306"
         environment:
             - MYSQL_DATABASE=$MYSQL_DATABASE
             - MYSQL_PASSWORD=$MYSQL_PASSWORD
@@ -65,14 +65,14 @@ services:
         build: ./.docker/nginx
         container_name: mcq_nginx
         ports:
-            - "8012:80"
+            - "8090:80"
         volumes:
             - ./:/var/www/app:cached
         depends_on:
             - web_api
 
     rabbit:
-        image: rabbitmq:3.9-management
+        image: rabbitmq:3.8-management
         container_name: mcq_rabbit
         hostname: rabbitmq
         ports:
@@ -81,25 +81,40 @@ services:
             - RABBITMQ_DEFAULT_USER=$RABBIT_USER
             - RABBITMQ_DEFAULT_PASS=$RABBIT_PASSWORD
 
+    ###> symfony/mercure-bundle ###
     mercure:
         image: dunglas/mercure
-        container_name: mercure
+        restart: unless-stopped
         environment:
-            - SERVER_NAME=:3000
-            - MERCURE_PUBLISHER_JWT_KEY=$MERCURE_JWT_SECRET
-            - MERCURE_SUBSCRIBER_JWT_KEY=$MERCURE_JWT_SECRET
+            # Uncomment the following line to disable HTTPS,
+            SERVER_NAME: ':3000'
+            MERCURE_PUBLISHER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
+            MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
+            # Set the URL of your Symfony project (without trailing slash!) as value of the cors_origins directive
+            MERCURE_EXTRA_DIRECTIVES: |
+                cors_origins *
         # Comment the following line to disable the development mode
-        command: /usr/bin/caddy run -config /etc/caddy/Caddyfile.dev
+        command: /usr/bin/caddy run --config /etc/caddy/dev.Caddyfile
+        healthcheck:
+            test: ["CMD", "curl", "-f", "https://localhost/healthz"]
+            timeout: 5s
+            retries: 5
+            start_period: 60s
         ports:
             - "3000:3000"
         volumes:
-            - ./.docker/mercure/caddy_data:/data
-            - ./.docker/mercure/caddy_config:/config
+            - mercure_data:/data
+            - mercure_config:/config
+    ###< symfony/mercure-bundle ###
 
     portainer:
         image: portainer/portainer-ce:latest
-        container_name: mp_portainer
+        container_name: mcq_portainer
         ports:
             - "9943:9443"
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+    mercure_data:
+    mercure_config:
