@@ -40,7 +40,9 @@ final class BoardsOverviewHandler
      */
     public function __invoke(BoardsOverview $query): array
     {
-        if ($query->open() === null) {
+        //dump($query);
+
+		if ($query->open() === null) {
             return $this->boardOverviewFinder->all();
         }
 

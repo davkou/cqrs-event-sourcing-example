@@ -47,8 +47,6 @@ class BoardCreatedPublisher
      */
     public function __invoke(BoardCreated $boardCreated): void
     {
-		dump($this->boardsSseUrl);
-
         $this->ssePublisher->publish($this->boardsSseUrl, json_encode([
             'eventType' => $boardCreated->eventType(),
             'payload' => [

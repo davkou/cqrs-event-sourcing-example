@@ -36,6 +36,17 @@ services:
             - ./.docker/mongo/data:/data/db:rw
             - ./tests/etc/_data/mongo:/testing-data:rw
 
+    mongo-express:
+        image: mongo-express
+        container_name: mcq_mongo_express
+        restart: always
+        ports:
+            - "8081:8081"
+        environment:
+            - ME_CONFIG_MONGODB_SERVER=mongo
+            - ME_CONFIG_MONGODB_PORT=27017
+            - ME_CONFIG_BASICAUTH_ENABLED="false"
+
     web_api:
         build:
             context: ./.docker/php
@@ -65,7 +76,7 @@ services:
         build: ./.docker/nginx
         container_name: mcq_nginx
         ports:
-            - "8090:80"
+            - "80:80"
         volumes:
             - ./:/var/www/app:cached
         depends_on:
